@@ -12,7 +12,7 @@ class canbus_ros_interface(can.Listener):
 
         self.canpub = rospy.Publisher('data', CanFrame)
         self.cansrv = rospy.Service('send_frame', CanFrameSrv, self.send_message)
-
+        
     def on_message_received(self,msg):
         #rospy.loginfo("received this %s"%(msg))
         canframe = CanFrame()
@@ -25,12 +25,16 @@ class canbus_ros_interface(can.Listener):
     def send_message(self, req):
         #rospy.loginfo("sending message"%(req))
         #TODO implement this
-        pass
+        data = req.data
+        arbitration_id = req.arbitration_id
+        message = can.Message(
+                arbitration_id=arbitration_id, is_extended_id=False, data=data
+            )
+        self.bus.send(message)
         
 if __name__=='__main__':
     rospy.init_node('can')
-    can_ifname =  rospy.get_param('can_ifname','can0')
-    bus = can.interface.Bus(can_ifname)
+    bus = can.interface.Bus(bustype="socketcan", channel="vcan0", bitrate=250000)
     canros = canbus_ros_interface(bus)
     r = rospy.Rate(10)
     try:
